@@ -3,42 +3,15 @@ import pandas as pd
 from ultralytics import YOLO
 from tracker import *
 import datetime
-
-import pypyodbc as odbc
-import sys
 #from PIL import Image
 #import numpy as np
-
-
-# SQL Connection #
-DRIVER = 'SQL Server'
-SERVER_NAME = 'MIDHUN\SQLEXPRESS'
-DATABASE_NAME = 'bagCounter'
-
-conn_string = f"""
-            Driver={{{DRIVER}}};
-            Server={SERVER_NAME};
-            Database={DATABASE_NAME};
-            Trust_Connection=yes;
-        """
-
-try:
-    conn = odbc.connect(conn_string)
-    print('connecting...')
-except Exception as e:
-    print(e)
-    print('Connection Terminated')
-    sys.exit()
-else:
-    print('Success')
-    cursor = conn.cursor()
 
 
 def left_click_detect(event, x, y, flags, points):
     if (event == cv2.EVENT_LBUTTONDOWN):
         print(f"\tClick on {x}, {y}")
 
-model = YOLO('./runs/detect/train/weights/best.pt')
+model = YOLO('./best.pt')
 tracker=Tracker()
 
 count = 0
@@ -99,12 +72,6 @@ while True:
                 ids.append(id)
                 current_time = datetime.datetime.now().replace(microsecond=0)
                 print("Count:",count," at:",current_time)
-                try:
-                    add_str = f"""USE {DATABASE_NAME} INSERT INTO BagDetails VALUES('{current_time}',{count})"""
-                    #print(add_str)
-                    cursor.execute(add_str)
-                except Exception as e:
-                    print(e)
 
         elif (cy == cy2) or (cy2 < (cy+offset) and cy2 > (cy - offset)):
             if id in ids:
@@ -114,15 +81,6 @@ while True:
                 ids.append(id)
                 current_time = datetime.datetime.now().replace(microsecond=0)
                 print("Count:", count, " at:", current_time)
-                try:
-                    add_str = f"""USE {DATABASE_NAME} INSERT INTO BagDetails VALUES('{current_time}',{count})"""
-                    #print(add_str)
-                    cursor.execute(add_str)
-                except Exception as e:
-                    print(e)
-
-
-
 
     text_color = (255, 0, 0)
     green_color = (0, 255, 0)  # (B, G, R)
@@ -145,5 +103,3 @@ while True:
         break
 cap.release()
 cv2.destroyAllWindows()
-cursor.commit()
-cursor.close()
